@@ -308,8 +308,8 @@ export function renderChapterTemporal(contentEl, filteredData, getCachedStats) {
                             </div>
                         </div>
                         <p class="text-sm text-gray-600 mt-3">
-                            Diferença: <strong>${formatCurrency(Math.abs(stats.seasonality.secondSemAvg - stats.seasonality.firstSemAvg))}</strong>
-                            (${((Math.abs(stats.seasonality.secondSemAvg - stats.seasonality.firstSemAvg) / stats.seasonality.firstSemAvg) * 100).toFixed(1)}%)
+                            Diferença: <strong>${formatCurrency(Math.abs(stats.seasonality.secondSemAvg - seasonality.firstSemAvg))}</strong>
+                            (${((Math.abs(stats.seasonality.secondSemAvg - seasonality.firstSemAvg) / stats.seasonality.firstSemAvg) * 100).toFixed(1)}%)
                         </p>
                     </div>
                 ` : ''}
@@ -435,7 +435,7 @@ export function renderChapterRegional(contentEl, filteredData, getCachedStats) {
 }
 
 // ==========================================================
-// ============= INÍCIO DA NOVA FUNÇÃO ADICIONADA =============
+// ============= INÍCIO DA FUNÇÃO MODIFICADA ================
 // ==========================================================
 
 export function renderChapterBandeiras(contentEl, filteredData, getCachedStats) {
@@ -444,8 +444,9 @@ export function renderChapterBandeiras(contentEl, filteredData, getCachedStats) 
         return;
     }
 
-    const { brandStats } = getCachedStats('bandeiras', () => {
-        const MIN_RECORDS_FOR_BRAND = 10; // Define um mínimo de registros para uma bandeira ser exibida
+    // Cálculos (incluindo a nova média das médias)
+    const { brandStats, averageOfAverages } = getCachedStats('bandeiras', () => {
+        const MIN_RECORDS_FOR_BRAND = 10; 
         
         const stats = _.chain(filteredData)
             .groupBy('bandeira')
@@ -462,19 +463,85 @@ export function renderChapterBandeiras(contentEl, filteredData, getCachedStats) 
                     median: math.median(prices)
                 };
             })
-            .compact() // Remove os nulos (Não Identificada e com poucos dados)
-            .orderBy(['mean'], ['asc']) // Ordena pela média, do mais barato ao mais caro
+            .compact() 
+            .orderBy(['mean'], ['asc']) // Ordena do mais barato ao mais caro
             .value();
         
-        return { brandStats: stats };
+        // NOVO: Cálculo da média das médias
+        const allAverages = stats.map(s => s.mean);
+        const avgOfAvgs = allAverages.length > 0 ? math.mean(allAverages) : 0;
+        
+        return { brandStats: stats, averageOfAverages: avgOfAvgs };
     });
 
-    // Para o gráfico, vamos pegar as 15 mais baratas
-    const top15Cheapest = brandStats.slice(0, 15);
+    // Separando os dados para o Pódio e Gráfico
+    const podium = brandStats.slice(0, 3); // Pega os 3 primeiros
+    const top15Cheapest = brandStats.slice(0, 15); // Pega os 15 primeiros para o gráfico
 
+    // NOVO: HTML do Pódio
+    const podiumHtml = `
+        <div class="bg-white p-6 rounded-lg shadow">
+            <h3 class="text-xl font-semibold mb-6 text-center text-gray-800 flex items-center justify-center space-x-2">
+                <i data-lucide="trophy" class="h-6 w-6 text-yellow-500"></i>
+                <span>Pódio: Melhores Médias de Preço</span>
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+                ${podium[1] ? `
+                <div class="bg-gray-100 p-4 rounded-lg border border-gray-300 transform scale-95 opacity-80">
+                    <i data-lucide="medal" class="h-10 w-10 text-gray-500 mx-auto mb-2"></i>
+                    <p class="text-sm font-semibold text-gray-600">2º Lugar</p>
+                    <p class="text-lg font-bold text-gray-800 truncate">${podium[1].bandeira}</p>
+                    <p class="text-xl font-bold text-gray-900">${formatCurrency(podium[1].mean)}</p>
+                </div>
+                ` : '<div class="hidden md:block"></div>'}
+
+                ${podium[0] ? `
+                <div class="bg-yellow-50 p-6 rounded-lg border-2 border-yellow-400 shadow-lg transform scale-105 z-10">
+                    <i data-lucide="award" class="h-12 w-12 text-yellow-600 mx-auto mb-2"></i>
+                    <p class="text-md font-semibold text-yellow-700">1º Lugar</p>
+                    <p class="text-xl font-bold text-yellow-900 truncate">${podium[0].bandeira}</p>
+                    <p class="text-2xl font-extrabold text-yellow-900">${formatCurrency(podium[0].mean)}</p>
+                </div>
+                ` : '<div class="hidden md:block"></div>'}
+                
+                ${podium[2] ? `
+                <div class="bg-orange-50 p-4 rounded-lg border border-orange-300 transform scale-95 opacity-80">
+                    <i data-lucide="medal" class="h-10 w-10 text-orange-600 mx-auto mb-2"></i>
+                    <p class="text-sm font-semibold text-orange-700">3º Lugar</p>
+                    <p class="text-lg font-bold text-orange-900 truncate">${podium[2].bandeira}</p>
+                    <p class="text-xl font-bold text-orange-900">${formatCurrency(podium[2].mean)}</p>
+                </div>
+                ` : '<div class="hidden md:block"></div>'}
+            </div>
+            ${podium.length < 3 ? '<p class="text-center text-sm text-gray-500 mt-4">Dados insuficientes para completar o pódio (mín. 10 registros por bandeira).</p>' : ''}
+        </div>
+    `;
+
+    // NOVO: Card para a Média das Médias (vai no sidebar)
+    const avgOfAvgsCard = `
+        <div class="bg-white p-4 rounded-lg shadow has-tooltip relative metric-card mt-6">
+            <div class="flex items-start justify-between">
+                <div>
+                    <p class="text-sm text-gray-500">Média das Médias</p>
+                    <p class="text-2xl font-bold text-gray-800">${formatCurrency(averageOfAverages)}</p>
+                </div>
+                <div class="bg-blue-100 p-2 rounded-full">
+                    <i data-lucide="calculator" class="h-6 w-6 text-blue-600"></i>
+                </div>
+            </div>
+            <div class="tooltip absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 bg-gray-800 text-white text-xs rounded py-2 px-3 z-50">
+                Este valor é a média aritmética dos preços médios de todas as bandeiras qualificadas (com 10+ registros).
+            </div>
+        </div>
+    `;
+
+    // Renderização do HTML principal
     contentEl.innerHTML = `
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div class="lg:col-span-2 space-y-8">
+                
+                ${podiumHtml}
+
                 ${createChartCard('bandeiras-avg-price', 'Preço Médio por Bandeira (Top 15 mais baratas)', 'Comparação do preço médio de gasolina entre as bandeiras com mais de 10 registros.')}
                 
                 <div class="bg-white p-6 rounded-lg shadow overflow-x-auto">
@@ -515,42 +582,46 @@ export function renderChapterBandeiras(contentEl, filteredData, getCachedStats) 
                         <li><strong>Média vs. Mediana:</strong> Se a média for muito maior que a mediana, significa que alguns postos dessa bandeira cobram valores muito altos, puxando a média para cima.</li>
                     </ul></p>`
                 )}
+
+                ${avgOfAvgsCard}
             </div>
         </div>`;
 
-    // Criar o gráfico
-    createBarChart(
-        'bandeiras-avg-price', 
-        top15Cheapest.map(b => b.bandeira), 
-        top15Cheapest.map(b => b.mean), 
-        { 
-            label: 'Preço Médio',
-            indexAxis: 'y', // Gráfico de barras horizontal é melhor para nomes longos
-            plugins: {
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            return ` Média: ${formatCurrency(context.parsed.x)}`;
+    // Criar o gráfico (igual ao anterior)
+    if (top15Cheapest.length > 0) {
+        createBarChart(
+            'bandeiras-avg-price', 
+            top15Cheapest.map(b => b.bandeira), 
+            top15Cheapest.map(b => b.mean), 
+            { 
+                label: 'Preço Médio',
+                indexAxis: 'y', 
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return ` Média: ${formatCurrency(context.parsed.x)}`;
+                            }
                         }
                     }
-                }
-            },
-            scales: {
-                x: {
-                    title: { display: true, text: 'Preço Médio (R$)' },
-                    ticks: {
-                        callback: function(value) {
-                            return formatCurrency(value);
+                },
+                scales: {
+                    x: {
+                        title: { display: true, text: 'Preço Médio (R$)' },
+                        ticks: {
+                            callback: function(value) {
+                                return formatCurrency(value);
+                            }
                         }
                     }
                 }
             }
-        }
-    );
+        );
+    }
 }
 
 // ==========================================================
-// ============= FIM DA NOVA FUNÇÃO ADICIONADA ==============
+// ============= FIM DA FUNÇÃO MODIFICADA ===================
 // ==========================================================
 
 
