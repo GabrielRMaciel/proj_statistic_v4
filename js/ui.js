@@ -434,6 +434,126 @@ export function renderChapterRegional(contentEl, filteredData, getCachedStats) {
     createBoxPlot('regional-boxplot', stats, 'regional');
 }
 
+// ==========================================================
+// ============= INÍCIO DA NOVA FUNÇÃO ADICIONADA =============
+// ==========================================================
+
+export function renderChapterBandeiras(contentEl, filteredData, getCachedStats) {
+    if (filteredData.length === 0) {
+        contentEl.innerHTML = createEmptyState();
+        return;
+    }
+
+    const { brandStats } = getCachedStats('bandeiras', () => {
+        const MIN_RECORDS_FOR_BRAND = 10; // Define um mínimo de registros para uma bandeira ser exibida
+        
+        const stats = _.chain(filteredData)
+            .groupBy('bandeira')
+            .map((data, nomeBandeira) => {
+                if (nomeBandeira === 'Não Identificada' || data.length < MIN_RECORDS_FOR_BRAND) {
+                    return null;
+                }
+                const prices = data.map(d => d.valorDeVenda);
+                return {
+                    bandeira: nomeBandeira,
+                    count: data.length,
+                    mean: math.mean(prices),
+                    min: math.min(prices),
+                    median: math.median(prices)
+                };
+            })
+            .compact() // Remove os nulos (Não Identificada e com poucos dados)
+            .orderBy(['mean'], ['asc']) // Ordena pela média, do mais barato ao mais caro
+            .value();
+        
+        return { brandStats: stats };
+    });
+
+    // Para o gráfico, vamos pegar as 15 mais baratas
+    const top15Cheapest = brandStats.slice(0, 15);
+
+    contentEl.innerHTML = `
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div class="lg:col-span-2 space-y-8">
+                ${createChartCard('bandeiras-avg-price', 'Preço Médio por Bandeira (Top 15 mais baratas)', 'Comparação do preço médio de gasolina entre as bandeiras com mais de 10 registros.')}
+                
+                <div class="bg-white p-6 rounded-lg shadow overflow-x-auto">
+                    <h3 class="text-lg font-semibold mb-4">Estatísticas Detalhadas por Bandeira</h3>
+                    <p class="text-sm text-gray-600 mb-4">Exibindo bandeiras com 10 ou mais registros, ordenadas por preço médio.</p>
+                    <table class="w-full text-sm text-left">
+                        <thead class="bg-gray-100">
+                            <tr>
+                                <th class="p-2">Bandeira</th>
+                                <th class="p-2 text-right">Média (R$)</th>
+                                <th class="p-2 text-right">Mediana (R$)</th>
+                                <th class="p-2 text-right">Mínimo (R$)</th>
+                                <th class="p-2 text-right">Registros</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${brandStats.map(b => `
+                                <tr class="border-b">
+                                    <td class="p-2 font-medium">${b.bandeira}</td>
+                                    <td class="p-2 text-right font-bold">${formatCurrency(b.mean)}</td>
+                                    <td class="p-2 text-right">${formatCurrency(b.median)}</td>
+                                    <td class="p-2 text-right text-green-600">${formatCurrency(b.min)}</td>
+                                    <td class="p-2 text-right">${b.count.toLocaleString('pt-BR')}</td>
+                                </tr>`).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="sidebar p-6 rounded-lg shadow-sm">
+                ${createSidebar(
+                    'Análise por Bandeira',
+                    `<h4 class="font-semibold text-gray-700 mb-2">Bandeira Branca vs. Marcas Estabelecidas</h4>
+                    <p class="text-sm text-gray-600 mb-4">Postos "bandeira branca" (sem vínculo com grandes distribuidoras) frequentemente oferecem preços mais competitivos, pois têm maior liberdade na compra do combustível.</p>
+                    <p class="text-sm text-gray-600 mb-4">Grandes marcas (como Shell, Ipiranga, Petrobras) podem ter preços mais altos, muitas vezes associados a programas de fidelidade, lojas de conveniência e percepção de qualidade/confiabilidade no combustível.</p>
+                    <h4 class="font-semibold text-gray-700 mt-4 mb-2">O que observar?</h4>
+                    <p class="text-sm text-gray-600"><ul class="list-disc list-inside mt-2 text-sm space-y-1">
+                        <li><strong>Preço Mínimo:</strong> O "melhor preço" encontrado para cada bandeira.</li>
+                        <li><strong>Média vs. Mediana:</strong> Se a média for muito maior que a mediana, significa que alguns postos dessa bandeira cobram valores muito altos, puxando a média para cima.</li>
+                    </ul></p>`
+                )}
+            </div>
+        </div>`;
+
+    // Criar o gráfico
+    createBarChart(
+        'bandeiras-avg-price', 
+        top15Cheapest.map(b => b.bandeira), 
+        top15Cheapest.map(b => b.mean), 
+        { 
+            label: 'Preço Médio',
+            indexAxis: 'y', // Gráfico de barras horizontal é melhor para nomes longos
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return ` Média: ${formatCurrency(context.parsed.x)}`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    title: { display: true, text: 'Preço Médio (R$)' },
+                    ticks: {
+                        callback: function(value) {
+                            return formatCurrency(value);
+                        }
+                    }
+                }
+            }
+        }
+    );
+}
+
+// ==========================================================
+// ============= FIM DA NOVA FUNÇÃO ADICIONADA ==============
+// ==========================================================
+
+
 export function renderChapterCorrelation(contentEl, filteredData, getCachedStats) {
     if (filteredData.length === 0) {
         contentEl.innerHTML = createEmptyState();
