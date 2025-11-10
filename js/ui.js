@@ -308,8 +308,10 @@ export function renderChapterTemporal(contentEl, filteredData, getCachedStats) {
                             </div>
                         </div>
                         <p class="text-sm text-gray-600 mt-3">
-                            Diferença: <strong>${formatCurrency(Math.abs(stats.seasonality.secondSemAvg - seasonality.firstSemAvg))}</strong>
-                            (${((Math.abs(stats.seasonality.secondSemAvg - seasonality.firstSemAvg) / stats.seasonality.firstSemAvg) * 100).toFixed(1)}%)
+                            Diferença: <strong>${formatCurrency(Math.abs(stats.seasonality.secondSemAvg - stats.seasonality.firstSemAvg))}</strong>
+                            
+                            (${((Math.abs(stats.seasonality.secondSemAvg - stats.seasonality.firstSemAvg) / stats.seasonality.firstSemAvg) * 100).toFixed(1)}%)
+                        
                         </p>
                     </div>
                 ` : ''}
@@ -435,7 +437,7 @@ export function renderChapterRegional(contentEl, filteredData, getCachedStats) {
 }
 
 // ==========================================================
-// ============= INÍCIO DA FUNÇÃO MODIFICADA ================
+// ============= INÍCIO DA SEÇÃO 'BANDEIRAS' ================
 // ==========================================================
 
 export function renderChapterBandeiras(contentEl, filteredData, getCachedStats) {
@@ -478,7 +480,7 @@ export function renderChapterBandeiras(contentEl, filteredData, getCachedStats) 
     const podium = brandStats.slice(0, 3); // Pega os 3 primeiros
     const top15Cheapest = brandStats.slice(0, 15); // Pega os 15 primeiros para o gráfico
 
-    // NOVO: HTML do Pódio
+    // HTML do Pódio
     const podiumHtml = `
         <div class="bg-white p-6 rounded-lg shadow">
             <h3 class="text-xl font-semibold mb-6 text-center text-gray-800 flex items-center justify-center space-x-2">
@@ -517,7 +519,7 @@ export function renderChapterBandeiras(contentEl, filteredData, getCachedStats) 
         </div>
     `;
 
-    // NOVO: Card para a Média das Médias (vai no sidebar)
+    // Card para a Média das Médias (vai no sidebar)
     const avgOfAvgsCard = `
         <div class="bg-white p-4 rounded-lg shadow has-tooltip relative metric-card mt-6">
             <div class="flex items-start justify-between">
@@ -587,7 +589,7 @@ export function renderChapterBandeiras(contentEl, filteredData, getCachedStats) 
             </div>
         </div>`;
 
-    // Criar o gráfico (igual ao anterior)
+    // Criar o gráfico
     if (top15Cheapest.length > 0) {
         createBarChart(
             'bandeiras-avg-price', 
@@ -621,7 +623,7 @@ export function renderChapterBandeiras(contentEl, filteredData, getCachedStats) 
 }
 
 // ==========================================================
-// ============= FIM DA FUNÇÃO MODIFICADA ===================
+// ============= FIM DA SEÇÃO 'BANDEIRAS' ===================
 // ==========================================================
 
 
