@@ -28,9 +28,7 @@ export function renderChapterOverview(contentEl, dataToUse, getCachedStats) {
                     ${createMetricCard('Combustível Analisado', 'Gasolina', 'A análise foca apenas em Gasolina Comum.', 'flame')}
                     
                     ${createMetricCard('Regionais Mapeadas', regionals.length, 'Número de regionais de BH com dados.', 'map-pinned')}
-                    
-                    ${createMetricCard('Período Analisado', '2.5 Anos', 'A análise cobre de Jan/2023 a Jun/2025.', 'calendar-days')}
-                    
+                    ${createMetricCard('Período Analisado', '3.5 Anos', 'A análise cobre de Jan/2022 a Jun/2025.', 'calendar-days')}
                     ${createMetricCard('Abrangência', 'Belo Horizonte', 'O escopo geográfico é restrito à capital mineira.', 'map')}
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -310,9 +308,9 @@ export function renderChapterTemporal(contentEl, filteredData, getCachedStats) {
                             </div>
                         </div>
                         <p class="text-sm text-gray-600 mt-3">
-                            Diferença: <strong>${formatCurrency(Math.abs(stats.seasonality.secondSemAvg - seasonality.firstSemAvg))}</strong>
+                            Diferença: <strong>${formatCurrency(Math.abs(stats.seasonality.secondSemAvg - stats.seasonality.firstSemAvg))}</strong>
                             
-                            (${((Math.abs(stats.seasonality.secondSemAvg - seasonality.firstSemAvg) / stats.seasonality.firstSemAvg) * 100).toFixed(1)}%)
+                            (${((Math.abs(stats.seasonality.secondSemAvg - stats.seasonality.firstSemAvg) / stats.seasonality.firstSemAvg) * 100).toFixed(1)}%)
                         
                         </p>
                     </div>
@@ -354,7 +352,7 @@ export function renderChapterTemporal(contentEl, filteredData, getCachedStats) {
                     `<h4 class="font-semibold text-gray-700 mb-2">Componentes da Série</h4>
                      <ul class="list-disc list-inside text-sm text-gray-600 space-y-1">
                         <li><strong>Tendência:</strong> Movimento de longo prazo (aumento/queda).</li>
-                        <li><strong>Sazonalidade:</strong> Padrões que se repetem regularly.</li>
+                        <li><strong>Sazonalidade:</strong> Padrões que se repetem regularmente.</li>
                         <li><strong>Ruído:</strong> Variações aleatórias.</li>
                      </ul>
                      <h4 class="font-semibold text-gray-700 mt-4 mb-2">Regressão Linear</h4>
@@ -654,8 +652,6 @@ export function renderChapterBandeiras(contentEl, filteredData, getCachedStats) 
 // ==========================================================
 
 
-// CORREÇÃO: Esta função foi simplificada para remover a lógica de paridade Etanol-Gasolina,
-// visto que 'data.js' só carrega dados de GASOLINA.
 export function renderChapterCorrelation(contentEl, filteredData, getCachedStats) {
     if (filteredData.length === 0) {
         contentEl.innerHTML = createEmptyState();
@@ -664,20 +660,26 @@ export function renderChapterCorrelation(contentEl, filteredData, getCachedStats
 
     const stats = getCachedStats('correlation', () => {
         const prices = filteredData.map(d => d.valorDeVenda);
-        // Converte data para um número (ex: meses desde a época) para correlação
-        const dates = filteredData.map(d => d.dataDaColeta ? d.dataDaColeta.getTime() / (1000 * 60 * 60 * 24 * 30) : 0)
-                                 .filter(d => d > 0); // Filtra datas inválidas
+        const dates = filteredData.map(d => d.dataDaColeta ? d.dataDaColeta.getTime() / (1000 * 60 * 60 * 24 * 30) : 0);
 
-        // Assegura que temos o mesmo número de preços e datas válidas
-        const validPrices = prices.filter((_, i) => filteredData[i].dataDaColeta && filteredData[i].dataDaColeta.getTime() > 0);
-        
-        const priceTimeCor = (validPrices.length > 1 && dates.length > 1 && validPrices.length === dates.length) 
-                           ? calculateCorrelation(validPrices, dates) 
-                           : 0;
+        const priceTimeCor = (prices.length > 1 && dates.length > 1) ? calculateCorrelation(prices, dates) : 0;
 
-        // Lógica de Etanol removida
+        const fuelPrices = _.groupBy(filteredData, 'produto');
+        const gasolinaComum = fuelPrices['GASOLINA'] || [];
+        const etanol = fuelPrices['ETANOL'] || []; 
+
+        let etanolGasolinaParity = null;
+        if (gasolinaComum.length > 0 && etanol.length > 0) { 
+            const avgGasolina = math.mean(gasolinaComum.map(d => d.valorDeVenda));
+            const avgEtanol = math.mean(etanol.map(d => d.valorDeVenda));
+            etanolGasolinaParity = (avgEtanol / avgGasolina) * 100;
+        }
+
         return {
-            priceTimeCor
+            priceTimeCor,
+            etanolGasolinaParity, 
+            gasolinaAvg: gasolinaComum.length > 0 ? math.mean(gasolinaComum.map(d => d.valorDeVenda)) : null,
+            etanolAvg: etanol.length > 0 ? math.mean(etanol.map(d => d.valorDeVenda)) : null
         };
     });
 
@@ -690,7 +692,11 @@ export function renderChapterCorrelation(contentEl, filteredData, getCachedStats
         return 'muito fraca ou inexistente';
     };
 
-    // Lógica de 'parityInterpretation' removida
+    const parityInterpretation = stats.etanolGasolinaParity
+        ? stats.etanolGasolinaParity <= 70
+            ? 'O etanol está <strong>vantajoso</strong> economicamente. Motoristas com carros flex devem optar pelo etanol.'
+            : 'A gasolina está <strong>mais vantajosa</strong> economicamente neste momento.'
+        : 'Dados insuficientes para calcular paridade.';
 
     contentEl.innerHTML = `
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -713,7 +719,30 @@ export function renderChapterCorrelation(contentEl, filteredData, getCachedStats
                             </p>
                         </div>
 
-                        </div>
+                        ${stats.etanolGasolinaParity ? `
+                        <div class="border-l-4 border-green-500 pl-4">
+                            <h4 class="font-semibold text-gray-800">Paridade Etanol-Gasolina</h4>
+                            <p class="text-sm text-gray-600 mt-1">
+                                Relação atual: <strong>${stats.etanolGasolinaParity.toFixed(1)}%</strong>
+                                <span class="ml-2 px-2 py-1 rounded text-xs font-medium ${stats.etanolGasolinaParity <= 70 ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">
+                                    ${stats.etanolGasolinaParity <= 70 ? 'Etanol Vantajoso' : 'Gasolina Vantajosa'}
+                                </span>
+                            </p>
+                            <p class="text-sm text-gray-700 mt-2">
+                                ${parityInterpretation}
+                            </p>
+                            <div class="mt-3 grid grid-cols-2 gap-4 text-sm">
+                                <div class="bg-gray-50 p-3 rounded">
+                                    <p class="text-gray-600">Gasolina Comum</p>
+                                    <p class="text-lg font-bold text-gray-800">${formatCurrency(stats.gasolinaAvg)}</p>
+                                </div>
+                                <div class="bg-gray-50 p-3 rounded">
+                                    <p class="text-gray-600">Etanol</p>
+                                    <p class="text-lg font-bold text-gray-800">${formatCurrency(stats.etanolAvg)}</p>
+                                </div>
+                            </div>
+                        </div>` : ''}
+                    </div>
                 </div>
 
                 <div class="bg-blue-50 border border-blue-200 p-6 rounded-lg">
@@ -764,7 +793,7 @@ export function renderChapterInsights(contentEl, allData, filteredData, getCache
                     </div>
                     <p class="text-gray-700">
                         Esta seção sintetiza os insights mais importantes da análise completa dos dados
-                        de gasolina em Belo Horizonte entre 2023 e 2025.
+                        de gasolina em Belo Horizonte entre 2022 e 2025.
                     </p>
                 </div>
 
@@ -1055,7 +1084,7 @@ function createBHMap(data, isPrice = false) {
     const regionals = [
         { id: 'Barreiro', d: 'M153 303 L134 321 L126 314 L117 320 L108 310 L108 290 L125 282 L140 285 Z' },
         { id: 'Centro-Sul', d: 'M188 234 L175 248 L170 270 L178 285 L192 280 L205 260 Z' },
-        { id:I 'Leste', d: 'M205 260 L192 280 L210 295 L225 280 L228 255 Z' },
+        { id: 'Leste', d: 'M205 260 L192 280 L210 295 L225 280 L228 255 Z' },
         { id: 'Nordeste', d: 'M228 255 L225 280 L245 270 L250 240 Z' },
         { id: 'Noroeste', d: 'M188 234 L160 210 L148 220 L155 245 L175 248 Z' },
         { id: 'Norte', d: 'M250 240 L245 270 L270 260 L280 220 L260 210 Z' },
@@ -1082,161 +1111,4 @@ function createBHMap(data, isPrice = false) {
             return `<path d="${r.d}" fill="${color}" stroke="#fff" stroke-width="1" class="map-regional has-tooltip"><title>${tooltipText}</title></path>`;
         }).join('')}
     </svg>`;
-}
-
-// A CHAVETA '}' EXTRA QUE ESTAVA AQUI FOI REMOIDA
-
-//
-// ==========================================================
-// ============= INÍCIO DA NOVA SEÇÃO 'POSTOS' ==============
-// ==========================================================
-//
-
-export function renderChapterPostos(contentEl, filteredData, getCachedStats) {
-    if (filteredData.length === 0) {
-        contentEl.innerHTML = createEmptyState();
-        return;
-    }
-
-    // Cálculos
-    const { stationStats } = getCachedStats('postos', () => {
-        const MIN_RECORDS_PER_POSTO = 5; // Mínimo de 5 coletas para um posto aparecer
-        
-        const stats = _.chain(filteredData)
-            .groupBy('cnpjDaRevenda') // CNPJ é o ID único de um posto
-            .map((data, cnpj) => {
-                if (data.length < MIN_RECORDS_PER_POSTO) {
-                    return null;
-                }
-                const prices = data.map(d => d.valorDeVenda);
-                const firstEntry = data[0]; // Pega dados que se repetem (nome, regional)
-                
-                return {
-                    cnpj: cnpj,
-                    nome: firstEntry.nomeDoPosto,
-                    regional: firstEntry.regional,
-                    bandeira: firstEntry.bandeira,
-                    count: data.length,
-                    mean: math.mean(prices),
-                    median: math.median(prices),
-                    min: math.min(prices),
-                    max: math.max(prices)
-                };
-            })
-            .compact() // Remove os postos nulos (que não atingiram o Mín_RECORDS)
-            .orderBy(['mean'], ['asc']) // Ordena do mais barato ao mais caro
-            .value();
-        
-        return { stationStats: stats };
-    });
-
-    if (stationStats.length === 0) {
-         contentEl.innerHTML = `<div class="text-center py-16 bg-white rounded-lg shadow">
-            <i data-lucide="filter-x" class="h-12 w-12 mx-auto text-gray-400"></i>
-            <h3 class="mt-2 text-lg font-medium text-gray-900">Nenhum posto encontrado</h3>
-            <p class="mt-1 text-sm text-gray-500">Nenhum posto com 5 ou mais registros foi encontrado para os filtros atuais. Tente ampliar sua seleção.</p>
-        </div>`;
-        return;
-    }
-
-    // Pódio (Top 3)
-    const podium = stationStats.slice(0, 3);
-
-    const podiumHtml = `
-        <div class="bg-white p-6 rounded-lg shadow">
-            <h3 class="text-xl font-semibold mb-6 text-center text-gray-800 flex items-center justify-center space-x-2">
-                <i data-lucide="trophy" class="h-6 w-6 text-yellow-500"></i>
-                <span>Pódio: Postos com Melhores Médias</span>
-            </h3>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
-                ${podium[1] ? `
-                <div class="bg-gray-100 p-4 rounded-lg border border-gray-300 transform scale-95 opacity-90">
-                    <i data-lucide="medal" class="h-10 w-10 text-gray-500 mx-auto mb-2"></i>
-                    <p class="text-sm font-semibold text-gray-600">2º Lugar</p>
-                    <p class="text-lg font-bold text-gray-800 truncate" title="${podium[1].nome}">${podium[1].nome}</p>
-                    <p class="text-xs text-gray-500">${podium[1].regional}</p>
-                    <p class="text-xl font-bold text-gray-900">${formatCurrency(podium[1].mean)}</p>
-                </div>
-                ` : '<div class="hidden md:block"></div>'}
-
-                ${podium[0] ? `
-                <div class="bg-yellow-50 p-6 rounded-lg border-2 border-yellow-400 shadow-lg transform scale-105 z-10">
-                    <i data-lucide="award" class="h-12 w-12 text-yellow-600 mx-auto mb-2"></i>
-                    <p class="text-md font-semibold text-yellow-700">1º Lugar</p>
-                    <p class="text-xl font-bold text-yellow-900 truncate" title="${podium[0].nome}">${podium[0].nome}</p>
-                    <p class="text-sm text-gray-600">${podium[0].regional}</p>
-                    <p class="text-2xl font-extrabold text-yellow-900">${formatCurrency(podium[0].mean)}</p>
-                </div>
-                ` : '<div class="hidden md:block"></div>'}
-                
-                ${podium[2] ? `
-                <div class="bg-orange-50 p-4 rounded-lg border border-orange-300 transform scale-95 opacity-90">
-                    <i data-lucide="medal" class="h-10 w-10 text-orange-600 mx-auto mb-2"></i>
-                    <p class="text-sm font-semibold text-orange-700">3º Lugar</p>
-                    <p class="text-lg font-bold text-orange-900 truncate" title="${podium[2].nome}">${podium[2].nome}</p>
-                    <p class="text-xs text-gray-500">${podium[2].regional}</p>
-                    <p class="text-xl font-bold text-orange-900">${formatCurrency(podium[2].mean)}</p>
-                </div>
-                ` : '<div class="hidden md:block"></div>'}
-            </div>
-        </div>
-    `;
-
-    // Tabela com todos os postos
-    const tableHtml = `
-        <div class="bg-white p-6 rounded-lg shadow overflow-x-auto">
-            <h3 class="text-lg font-semibold mb-4">Ranking Detalhado de Postos (por Preço Médio)</h3>
-            <p class="text-sm text-gray-600 mb-4">Exibindo postos com 5 ou mais registros, ordenados por preço médio.</p>
-            <table class="w-full text-sm text-left">
-                <thead class="bg-gray-100">
-                    <tr>
-                        <th class="p-2">Posto (Nome)</th>
-                        <th class="p-2">Regional</th>
-                        <th class="p-2">Bandeira</th>
-                        <th class="p-2 text-right">Média (R$)</th>
-                        <th class="p-2 text-right">Melhor Preço (R$)</th>
-                        <th class="p-2 text-right">Registros</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${stationStats.map(s => `
-                        <tr class="border-b">
-                            <td class="p-2 font-medium" title="${s.nome}">${s.nome.substring(0, 35)}${s.nome.length > 35 ? '...' : ''}</td>
-                            <td class="p-2">${s.regional}</td>
-                            <td class="p-2">${s.bandeira}</td>
-                            <td class="p-2 text-right font-bold">${formatCurrency(s.mean)}</td>
-                            <td class="p-2 text-right text-green-600">${formatCurrency(s.min)}</td>
-                            <td class="p-2 text-right">${s.count.toLocaleString('pt-BR')}</td>
-                        </tr>`).join('')}
-                </tbody>
-            </table>
-        </div>
-    `;
-
-    // Renderização do HTML principal
-    contentEl.innerHTML = `
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div class="lg:col-span-2 space-y-8">
-                
-                ${podiumHtml}
-
-                ${tableHtml}
-                
-            </div>
-            <div class="sidebar p-6 rounded-lg shadow-sm">
-                ${createSidebar(
-                    'Análise por Posto',
-                    `<h4 class="font-semibold text-gray-700 mb-2">Análise Granular</h4>
-                    <p class="text-sm text-gray-600 mb-4">Esta seção agrupa os dados pelo <strong>CNPJ de cada posto</strong>, oferecendo a visão mais detalhada possível de quem pratica os melhores preços.</p>
-                    <p class="text-sm text-gray-600 mb-4">A "Análise Regional" mostra a média de uma área; esta seção mostra o posto específico.</p>
-                    
-                    <h4 class="font-semibold text-gray-700 mt-4 mb-2">O que observar?</h4>
-                    <p class="text-sm text-gray-600"><ul class="list-disc list-inside mt-2 text-sm space-y-1">
-                        <li><strong>Preço Médio:</strong> Indica a <strong>consistência</strong> do posto em manter preços baixos. É o indicador mais confiável para escolher onde abastecer.</li>
-                        <li><strong>Melhor Preço:</strong> Mostra o preço mais baixo já registrado (mínimo). Pode ter sido uma promoção pontual.</li>
-                        <li><strong>Registros:</strong> Um número maior de registros (coletas) torna a média mais confiável.</li>
-                    </ul></p>`
-                )}
-            </div>
-        </div>`;
 }
