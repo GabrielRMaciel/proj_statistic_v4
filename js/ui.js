@@ -28,7 +28,9 @@ export function renderChapterOverview(contentEl, dataToUse, getCachedStats) {
                     ${createMetricCard('Combustível Analisado', 'Gasolina', 'A análise foca apenas em Gasolina Comum.', 'flame')}
                     
                     ${createMetricCard('Regionais Mapeadas', regionals.length, 'Número de regionais de BH com dados.', 'map-pinned')}
-                    ${createMetricCard('Período Analisado', '3.5 Anos', 'A análise cobre de Jan/2022 a Jun/2025.', 'calendar-days')}
+                    
+                    ${createMetricCard('Período Analisado', '2.5 Anos', 'A análise cobre de Jan/2023 a Jun/2025.', 'calendar-days')}
+                    
                     ${createMetricCard('Abrangência', 'Belo Horizonte', 'O escopo geográfico é restrito à capital mineira.', 'map')}
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -652,6 +654,8 @@ export function renderChapterBandeiras(contentEl, filteredData, getCachedStats) 
 // ==========================================================
 
 
+// CORREÇÃO: Esta função foi simplificada para remover a lógica de paridade Etanol-Gasolina,
+// visto que 'data.js' só carrega dados de GASOLINA.
 export function renderChapterCorrelation(contentEl, filteredData, getCachedStats) {
     if (filteredData.length === 0) {
         contentEl.innerHTML = createEmptyState();
@@ -660,26 +664,20 @@ export function renderChapterCorrelation(contentEl, filteredData, getCachedStats
 
     const stats = getCachedStats('correlation', () => {
         const prices = filteredData.map(d => d.valorDeVenda);
-        const dates = filteredData.map(d => d.dataDaColeta ? d.dataDaColeta.getTime() / (1000 * 60 * 60 * 24 * 30) : 0);
+        // Converte data para um número (ex: meses desde a época) para correlação
+        const dates = filteredData.map(d => d.dataDaColeta ? d.dataDaColeta.getTime() / (1000 * 60 * 60 * 24 * 30) : 0)
+                                 .filter(d => d > 0); // Filtra datas inválidas
 
-        const priceTimeCor = (prices.length > 1 && dates.length > 1) ? calculateCorrelation(prices, dates) : 0;
+        // Assegura que temos o mesmo número de preços e datas válidas
+        const validPrices = prices.filter((_, i) => filteredData[i].dataDaColeta && filteredData[i].dataDaColeta.getTime() > 0);
+        
+        const priceTimeCor = (validPrices.length > 1 && dates.length > 1 && validPrices.length === dates.length) 
+                           ? calculateCorrelation(validPrices, dates) 
+                           : 0;
 
-        const fuelPrices = _.groupBy(filteredData, 'produto');
-        const gasolinaComum = fuelPrices['GASOLINA'] || [];
-        const etanol = fuelPrices['ETANOL'] || []; 
-
-        let etanolGasolinaParity = null;
-        if (gasolinaComum.length > 0 && etanol.length > 0) { 
-            const avgGasolina = math.mean(gasolinaComum.map(d => d.valorDeVenda));
-            const avgEtanol = math.mean(etanol.map(d => d.valorDeVenda));
-            etanolGasolinaParity = (avgEtanol / avgGasolina) * 100;
-        }
-
+        // Lógica de Etanol removida
         return {
-            priceTimeCor,
-            etanolGasolinaParity, 
-            gasolinaAvg: gasolinaComum.length > 0 ? math.mean(gasolinaComum.map(d => d.valorDeVenda)) : null,
-            etanolAvg: etanol.length > 0 ? math.mean(etanol.map(d => d.valorDeVenda)) : null
+            priceTimeCor
         };
     });
 
@@ -692,11 +690,7 @@ export function renderChapterCorrelation(contentEl, filteredData, getCachedStats
         return 'muito fraca ou inexistente';
     };
 
-    const parityInterpretation = stats.etanolGasolinaParity
-        ? stats.etanolGasolinaParity <= 70
-            ? 'O etanol está <strong>vantajoso</strong> economicamente. Motoristas com carros flex devem optar pelo etanol.'
-            : 'A gasolina está <strong>mais vantajosa</strong> economicamente neste momento.'
-        : 'Dados insuficientes para calcular paridade.';
+    // Lógica de 'parityInterpretation' removida
 
     contentEl.innerHTML = `
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -719,30 +713,7 @@ export function renderChapterCorrelation(contentEl, filteredData, getCachedStats
                             </p>
                         </div>
 
-                        ${stats.etanolGasolinaParity ? `
-                        <div class="border-l-4 border-green-500 pl-4">
-                            <h4 class="font-semibold text-gray-800">Paridade Etanol-Gasolina</h4>
-                            <p class="text-sm text-gray-600 mt-1">
-                                Relação atual: <strong>${stats.etanolGasolinaParity.toFixed(1)}%</strong>
-                                <span class="ml-2 px-2 py-1 rounded text-xs font-medium ${stats.etanolGasolinaParity <= 70 ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">
-                                    ${stats.etanolGasolinaParity <= 70 ? 'Etanol Vantajoso' : 'Gasolina Vantajosa'}
-                                </span>
-                            </p>
-                            <p class="text-sm text-gray-700 mt-2">
-                                ${parityInterpretation}
-                            </p>
-                            <div class="mt-3 grid grid-cols-2 gap-4 text-sm">
-                                <div class="bg-gray-50 p-3 rounded">
-                                    <p class="text-gray-600">Gasolina Comum</p>
-                                    <p class="text-lg font-bold text-gray-800">${formatCurrency(stats.gasolinaAvg)}</p>
-                                </div>
-                                <div class="bg-gray-50 p-3 rounded">
-                                    <p class="text-gray-600">Etanol</p>
-                                    <p class="text-lg font-bold text-gray-800">${formatCurrency(stats.etanolAvg)}</p>
-                                </div>
-                            </div>
-                        </div>` : ''}
-                    </div>
+                        </div>
                 </div>
 
                 <div class="bg-blue-50 border border-blue-200 p-6 rounded-lg">
@@ -793,7 +764,7 @@ export function renderChapterInsights(contentEl, allData, filteredData, getCache
                     </div>
                     <p class="text-gray-700">
                         Esta seção sintetiza os insights mais importantes da análise completa dos dados
-                        de gasolina em Belo Horizonte entre 2022 e 2025.
+                        de gasolina em Belo Horizonte entre 2023 e 2025.
                     </p>
                 </div>
 
@@ -1112,3 +1083,5 @@ function createBHMap(data, isPrice = false) {
         }).join('')}
     </svg>`;
 }
+
+// A CHAVETA '}' EXTRA QUE ESTAVA AQUI FOI REMOVIDA
