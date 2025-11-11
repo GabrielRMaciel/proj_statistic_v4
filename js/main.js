@@ -4,9 +4,8 @@ import {
     renderNavigation, renderFilters,
     renderChapterOverview, renderChapterDistribution,
     renderChapterTemporal, renderChapterRegional,
-    renderChapterBandeiras,
-    renderChapterCorrelation, renderChapterInsights,
-    renderChapterPostos // <-- ADICIONADO
+    renderChapterBandeiras, // <-- ADICIONADO
+    renderChapterCorrelation, renderChapterInsights
 } from './ui.js';
 import { destroyAllCharts } from './charts.js';
 import { detectOutliers } from './utils.js';
@@ -22,8 +21,7 @@ const chapters = [
     { id: 'distribution', name: 'Distribuições', icon: 'bar-chart-3' },
     { id: 'temporal', name: 'Evolução Temporal', icon: 'trending-up' },
     { id: 'regional', name: 'Análise Regional', icon: 'map' },
-    { id: 'bandeiras', name: 'Análise por Bandeira', icon: 'tags' },
-    { id: 'postos', name: 'Análise de Postos', icon: 'gas-pump' }, // <-- ADICIONADO
+    { id: 'bandeiras', name: 'Análise por Bandeira', icon: 'tags' }, // <-- ADICIONADO
     { id: 'correlation', name: 'Correlações', icon: 'git-merge' },
     { id: 'insights', name: 'Insights', icon: 'lightbulb' }
 ];
@@ -120,9 +118,6 @@ function renderActiveChapter() {
             break;
         case 'bandeiras': // <-- ADICIONADO
             renderChapterBandeiras(contentEl, filteredData, getCachedStats);
-            break;
-        case 'postos': // <-- ADICIONADO
-            renderChapterPostos(contentEl, filteredData, getCachedStats);
             break;
         case 'correlation':
             renderChapterCorrelation(contentEl, filteredData, getCachedStats);
