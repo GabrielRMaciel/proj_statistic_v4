@@ -446,7 +446,7 @@ export function renderChapterBandeiras(contentEl, filteredData, getCachedStats) 
         return;
     }
 
-    // Cálculos (incluindo a nova média das médias)
+    // Cálculos
     const { brandStats, averageOfAverages } = getCachedStats('bandeiras', () => {
         const MIN_RECORDS_FOR_BRAND = 10; 
         
@@ -469,16 +469,16 @@ export function renderChapterBandeiras(contentEl, filteredData, getCachedStats) 
             .orderBy(['mean'], ['asc']) // Ordena do mais barato ao mais caro
             .value();
         
-        // NOVO: Cálculo da média das médias
         const allAverages = stats.map(s => s.mean);
         const avgOfAvgs = allAverages.length > 0 ? math.mean(allAverages) : 0;
         
         return { brandStats: stats, averageOfAverages: avgOfAvgs };
     });
 
-    // Separando os dados para o Pódio e Gráfico
-    const podium = brandStats.slice(0, 3); // Pega os 3 primeiros
-    const top15Cheapest = brandStats.slice(0, 15); // Pega os 15 primeiros para o gráfico
+    // Separando os dados
+    const podium = brandStats.slice(0, 3);
+    const top15Cheapest = brandStats.slice(0, 15);
+    const cheapestBrand = brandStats.length > 0 ? brandStats[0] : null; // <--- DADO PARA O NOVO CARD
 
     // HTML do Pódio
     const podiumHtml = `
@@ -519,7 +519,30 @@ export function renderChapterBandeiras(contentEl, filteredData, getCachedStats) 
         </div>
     `;
 
-    // Card para a Média das Médias (vai no sidebar)
+    // **** NOVO CARD ADICIONADO ****
+    // Card para a Bandeira Mais Barata
+    let cheapestBrandCardHtml = '';
+    if (cheapestBrand) {
+        cheapestBrandCardHtml = `
+            <div class="bg-white p-4 rounded-lg shadow has-tooltip relative metric-card mt-6">
+                <div class="flex items-start justify-between">
+                    <div>
+                        <p class="text-sm text-gray-500">Bandeira Mais Barata (Média)</p>
+                        <p class="text-lg font-bold text-gray-800 truncate" title="${cheapestBrand.bandeira}">${cheapestBrand.bandeira}</p>
+                        <p class="text-2xl font-bold text-green-600">${formatCurrency(cheapestBrand.mean)}</p>
+                    </div>
+                    <div class="bg-green-100 p-2 rounded-full">
+                        <i data-lucide="award" class="h-6 w-6 text-green-600"></i>
+                    </div>
+                </div>
+                <div class="tooltip absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 bg-gray-800 text-white text-xs rounded py-2 px-3 z-50">
+                    Esta é a bandeira com o menor preço médio, considerando apenas bandeiras com 10 ou mais registros.
+                </div>
+            </div>
+        `;
+    }
+
+    // Card para a Média das Médias
     const avgOfAvgsCard = `
         <div class="bg-white p-4 rounded-lg shadow has-tooltip relative metric-card mt-6">
             <div class="flex items-start justify-between">
@@ -584,6 +607,8 @@ export function renderChapterBandeiras(contentEl, filteredData, getCachedStats) 
                         <li><strong>Média vs. Mediana:</strong> Se a média for muito maior que a mediana, significa que alguns postos dessa bandeira cobram valores muito altos, puxando a média para cima.</li>
                     </ul></p>`
                 )}
+
+                ${cheapestBrandCardHtml}
 
                 ${avgOfAvgsCard}
             </div>
