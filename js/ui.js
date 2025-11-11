@@ -310,9 +310,9 @@ export function renderChapterTemporal(contentEl, filteredData, getCachedStats) {
                             </div>
                         </div>
                         <p class="text-sm text-gray-600 mt-3">
-                            Diferença: <strong>${formatCurrency(Math.abs(stats.seasonality.secondSemAvg - stats.seasonality.firstSemAvg))}</strong>
+                            Diferença: <strong>${formatCurrency(Math.abs(stats.seasonality.secondSemAvg - seasonality.firstSemAvg))}</strong>
                             
-                            (${((Math.abs(stats.seasonality.secondSemAvg - stats.seasonality.firstSemAvg) / stats.seasonality.firstSemAvg) * 100).toFixed(1)}%)
+                            (${((Math.abs(stats.seasonality.secondSemAvg - seasonality.firstSemAvg) / stats.seasonality.firstSemAvg) * 100).toFixed(1)}%)
                         
                         </p>
                     </div>
@@ -1085,3 +1085,158 @@ function createBHMap(data, isPrice = false) {
 }
 
 // A CHAVETA '}' EXTRA QUE ESTAVA AQUI FOI REMOVIDA
+
+//
+// ==========================================================
+// ============= INÍCIO DA NOVA SEÇÃO 'POSTOS' ==============
+// ==========================================================
+//
+
+export function renderChapterPostos(contentEl, filteredData, getCachedStats) {
+    if (filteredData.length === 0) {
+        contentEl.innerHTML = createEmptyState();
+        return;
+    }
+
+    // Cálculos
+    const { stationStats } = getCachedStats('postos', () => {
+        const MIN_RECORDS_PER_POSTO = 5; // Mínimo de 5 coletas para um posto aparecer
+        
+        const stats = _.chain(filteredData)
+            .groupBy('cnpjDaRevenda') // CNPJ é o ID único de um posto
+            .map((data, cnpj) => {
+                if (data.length < MIN_RECORDS_PER_POSTO) {
+                    return null;
+                }
+                const prices = data.map(d => d.valorDeVenda);
+                const firstEntry = data[0]; // Pega dados que se repetem (nome, regional)
+                
+                return {
+                    cnpj: cnpj,
+                    nome: firstEntry.nomeDoPosto,
+                    regional: firstEntry.regional,
+                    bandeira: firstEntry.bandeira,
+                    count: data.length,
+                    mean: math.mean(prices),
+                    median: math.median(prices),
+                    min: math.min(prices),
+                    max: math.max(prices)
+                };
+            })
+            .compact() // Remove os postos nulos (que não atingiram o Mín_RECORDS)
+            .orderBy(['mean'], ['asc']) // Ordena do mais barato ao mais caro
+            .value();
+        
+        return { stationStats: stats };
+    });
+
+    if (stationStats.length === 0) {
+         contentEl.innerHTML = `<div class="text-center py-16 bg-white rounded-lg shadow">
+            <i data-lucide="filter-x" class="h-12 w-12 mx-auto text-gray-400"></i>
+            <h3 class="mt-2 text-lg font-medium text-gray-900">Nenhum posto encontrado</h3>
+            <p class="mt-1 text-sm text-gray-500">Nenhum posto com 5 ou mais registros foi encontrado para os filtros atuais. Tente ampliar sua seleção.</p>
+        </div>`;
+        return;
+    }
+
+    // Pódio (Top 3)
+    const podium = stationStats.slice(0, 3);
+
+    const podiumHtml = `
+        <div class="bg-white p-6 rounded-lg shadow">
+            <h3 class="text-xl font-semibold mb-6 text-center text-gray-800 flex items-center justify-center space-x-2">
+                <i data-lucide="trophy" class="h-6 w-6 text-yellow-500"></i>
+                <span>Pódio: Postos com Melhores Médias</span>
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+                ${podium[1] ? `
+                <div class="bg-gray-100 p-4 rounded-lg border border-gray-300 transform scale-95 opacity-90">
+                    <i data-lucide="medal" class="h-10 w-10 text-gray-500 mx-auto mb-2"></i>
+                    <p class="text-sm font-semibold text-gray-600">2º Lugar</p>
+                    <p class="text-lg font-bold text-gray-800 truncate" title="${podium[1].nome}">${podium[1].nome}</p>
+                    <p class="text-xs text-gray-500">${podium[1].regional}</p>
+                    <p class="text-xl font-bold text-gray-900">${formatCurrency(podium[1].mean)}</p>
+                </div>
+                ` : '<div class="hidden md:block"></div>'}
+
+                ${podium[0] ? `
+                <div class="bg-yellow-50 p-6 rounded-lg border-2 border-yellow-400 shadow-lg transform scale-105 z-10">
+                    <i data-lucide="award" class="h-12 w-12 text-yellow-600 mx-auto mb-2"></i>
+                    <p class="text-md font-semibold text-yellow-700">1º Lugar</p>
+                    <p class="text-xl font-bold text-yellow-900 truncate" title="${podium[0].nome}">${podium[0].nome}</p>
+                    <p class="text-sm text-gray-600">${podium[0].regional}</p>
+                    <p class="text-2xl font-extrabold text-yellow-900">${formatCurrency(podium[0].mean)}</p>
+                </div>
+                ` : '<div class="hidden md:block"></div>'}
+                
+                ${podium[2] ? `
+                <div class="bg-orange-50 p-4 rounded-lg border border-orange-300 transform scale-95 opacity-90">
+                    <i data-lucide="medal" class="h-10 w-10 text-orange-600 mx-auto mb-2"></i>
+                    <p class="text-sm font-semibold text-orange-700">3º Lugar</p>
+                    <p class="text-lg font-bold text-orange-900 truncate" title="${podium[2].nome}">${podium[2].nome}</p>
+                    <p class="text-xs text-gray-500">${podium[2].regional}</p>
+                    <p class="text-xl font-bold text-orange-900">${formatCurrency(podium[2].mean)}</p>
+                </div>
+                ` : '<div class="hidden md:block"></div>'}
+            </div>
+        </div>
+    `;
+
+    // Tabela com todos os postos
+    const tableHtml = `
+        <div class="bg-white p-6 rounded-lg shadow overflow-x-auto">
+            <h3 class="text-lg font-semibold mb-4">Ranking Detalhado de Postos (por Preço Médio)</h3>
+            <p class="text-sm text-gray-600 mb-4">Exibindo postos com 5 ou mais registros, ordenados por preço médio.</p>
+            <table class="w-full text-sm text-left">
+                <thead class="bg-gray-100">
+                    <tr>
+                        <th class="p-2">Posto (Nome)</th>
+                        <th class="p-2">Regional</th>
+                        <th class="p-2">Bandeira</th>
+                        <th class="p-2 text-right">Média (R$)</th>
+                        <th class="p-2 text-right">Melhor Preço (R$)</th>
+                        <th class="p-2 text-right">Registros</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${stationStats.map(s => `
+                        <tr class="border-b">
+                            <td class="p-2 font-medium" title="${s.nome}">${s.nome.substring(0, 35)}${s.nome.length > 35 ? '...' : ''}</td>
+                            <td class="p-2">${s.regional}</td>
+                            <td class="p-2">${s.bandeira}</td>
+                            <td class="p-2 text-right font-bold">${formatCurrency(s.mean)}</td>
+                            <td class="p-2 text-right text-green-600">${formatCurrency(s.min)}</td>
+                            <td class="p-2 text-right">${s.count.toLocaleString('pt-BR')}</td>
+                        </tr>`).join('')}
+                </tbody>
+            </table>
+        </div>
+    `;
+
+    // Renderização do HTML principal
+    contentEl.innerHTML = `
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div class="lg:col-span-2 space-y-8">
+                
+                ${podiumHtml}
+
+                ${tableHtml}
+                
+            </div>
+            <div class="sidebar p-6 rounded-lg shadow-sm">
+                ${createSidebar(
+                    'Análise por Posto',
+                    `<h4 class="font-semibold text-gray-700 mb-2">Análise Granular</h4>
+                    <p class="text-sm text-gray-600 mb-4">Esta seção agrupa os dados pelo <strong>CNPJ de cada posto</strong>, oferecendo a visão mais detalhada possível de quem pratica os melhores preços.</p>
+                    <p class="text-sm text-gray-600 mb-4">A "Análise Regional" mostra a média de uma área; esta seção mostra o posto específico.</p>
+                    
+                    <h4 class="font-semibold text-gray-700 mt-4 mb-2">O que observar?</h4>
+                    <p class="text-sm text-gray-600"><ul class="list-disc list-inside mt-2 text-sm space-y-1">
+                        <li><strong>Preço Médio:</strong> Indica a <strong>consistência</strong> do posto em manter preços baixos. É o indicador mais confiável para escolher onde abastecer.</li>
+                        <li><strong>Melhor Preço:</strong> Mostra o preço mais baixo já registrado (mínimo). Pode ter sido uma promoção pontual.</li>
+                        <li><strong>Registros:</strong> Um número maior de registros (coletas) torna a média mais confiável.</li>
+                    </ul></p>`
+                )}
+            </div>
+        </div>`;
+}
