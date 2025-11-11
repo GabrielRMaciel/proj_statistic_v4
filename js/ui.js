@@ -354,7 +354,7 @@ export function renderChapterTemporal(contentEl, filteredData, getCachedStats) {
                     `<h4 class="font-semibold text-gray-700 mb-2">Componentes da Série</h4>
                      <ul class="list-disc list-inside text-sm text-gray-600 space-y-1">
                         <li><strong>Tendência:</strong> Movimento de longo prazo (aumento/queda).</li>
-                        <li><strong>Sazonalidade:</strong> Padrões que se repetem regularmente.</li>
+                        <li><strong>Sazonalidade:</strong> Padrões que se repetem regularly.</li>
                         <li><strong>Ruído:</strong> Variações aleatórias.</li>
                      </ul>
                      <h4 class="font-semibold text-gray-700 mt-4 mb-2">Regressão Linear</h4>
@@ -1055,7 +1055,7 @@ function createBHMap(data, isPrice = false) {
     const regionals = [
         { id: 'Barreiro', d: 'M153 303 L134 321 L126 314 L117 320 L108 310 L108 290 L125 282 L140 285 Z' },
         { id: 'Centro-Sul', d: 'M188 234 L175 248 L170 270 L178 285 L192 280 L205 260 Z' },
-        { id: 'Leste', d: 'M205 260 L192 280 L210 295 L225 280 L228 255 Z' },
+        { id:I 'Leste', d: 'M205 260 L192 280 L210 295 L225 280 L228 255 Z' },
         { id: 'Nordeste', d: 'M228 255 L225 280 L245 270 L250 240 Z' },
         { id: 'Noroeste', d: 'M188 234 L160 210 L148 220 L155 245 L175 248 Z' },
         { id: 'Norte', d: 'M250 240 L245 270 L270 260 L280 220 L260 210 Z' },
@@ -1084,7 +1084,7 @@ function createBHMap(data, isPrice = false) {
     </svg>`;
 }
 
-// A CHAVETA '}' EXTRA QUE ESTAVA AQUI FOI REMOVIDA
+// A CHAVETA '}' EXTRA QUE ESTAVA AQUI FOI REMOIDA
 
 //
 // ==========================================================
