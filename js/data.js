@@ -30,11 +30,9 @@ function processAndConsolidateData(results, files) {
             return;
         }
         const fileName = files[index];
-        // Esta regex ainda funciona com os novos nomes
         const semester = fileName.match(/(\d{4}_s\d)/)[1].replace('_s', '/S'); 
         
         const cleanedData = data
-            // O filtro de 'GASOLINA' que colocamos antes continua correto
             .filter(row => row && 
                            row.Municipio === 'BELO HORIZONTE' && 
                            row['Valor de Venda'] &&
@@ -83,8 +81,6 @@ function processAndConsolidateData(results, files) {
 }
 
 export async function loadAllData() {
-    // MODIFICAÇÃO: Atualizado o array 'files' com os nomes da sua imagem.
-    // Removi os arquivos de 2022 e atualizei os nomes de 2023-2025.
     const files = [
         'data/combustiveis_2023_s1 - Gasolina.csv',
         'data/combustiveis_2023_s2 - Gasolina.csv',
@@ -104,4 +100,5 @@ export async function loadAllData() {
     
     document.getElementById('loader-message').textContent = 'Consolidando e limpando dados...';
     return processAndConsolidateData(results, files);
+
 }
