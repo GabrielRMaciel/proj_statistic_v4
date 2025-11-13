@@ -36,11 +36,6 @@ export const BAIRRO_REGIONAL_MAP = {
 
 export const FUEL_COLORS = {
     'GASOLINA': 'var(--chart-color-1)',
-    'GASOLINA ADITIVADA': 'var(--chart-color-2)',
-    'ETANOL': 'var(--chart-color-3)',
-    'DIESEL S10': 'var(--chart-color-4)',
-    'DIESEL S500': 'var(--chart-color-5)',
-    'GNV': 'var(--chart-color-6)',
     'default': '#6b7280'
 };
 
@@ -84,3 +79,4 @@ export function calculateCorrelation(arr1, arr2) {
     const denominator = Math.sqrt(sum1 * sum2);
     return denominator === 0 ? 0 : numerator / denominator;
 }
+
