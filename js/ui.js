@@ -1,5 +1,5 @@
 // js/ui.js
-import { createBarChart, createDoughnutChart, createLineChart, createHistogram, createBoxPlot } from './charts.js';
+import { createBarChart, createLineChart, createHistogram, createBoxPlot } from './charts.js';
 import { formatCurrency, calculateCorrelation } from './utils.js';
 
 // --- Funções de Renderização dos Capítulos ---
@@ -1103,4 +1103,5 @@ function createBHMap(data, isPrice = false) {
         }).join('')}
     </svg>`;
 }
+
 
