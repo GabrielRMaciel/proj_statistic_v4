@@ -379,11 +379,6 @@ export function renderChapterRegional(contentEl, filteredData, getCachedStats) {
     contentEl.innerHTML = `
          <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div class="lg:col-span-2 space-y-8">
-                <div class="bg-white p-6 rounded-lg shadow">
-                    <h3 class="text-lg font-semibold mb-2">Preço Médio por Regional</h3>
-                    <p class="text-sm text-gray-600 mb-4">O mapa mostra o preço médio do combustível por regional. Áreas mais escuras indicam preços mais altos.</p>
-                    ${createBHMap(meanPricesByRegional, true)}
-                </div>
                 ${createChartCard('regional-boxplot', 'Distribuição de Preços por Regional', 'Compare a variação de preços entre as diferentes regionais de BH.')}
                 <div class="bg-white p-6 rounded-lg shadow overflow-x-auto">
                     <h3 class="text-lg font-semibold mb-4">Estatísticas por Regional</h3>
@@ -1066,3 +1061,4 @@ function createEmptyState() {
         <p class="mt-1 text-sm text-gray-500">Tente ajustar os filtros para visualizar os dados.</p>
     </div>`;
 }
+
