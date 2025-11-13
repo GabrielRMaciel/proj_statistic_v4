@@ -350,10 +350,6 @@ export function renderChapterTemporal(contentEl, filteredData, getCachedStats) {
                         <li><strong>Sazonalidade:</strong> Padrões que se repetem regularmente.</li>
                         <li><strong>Ruído:</strong> Variações aleatórias.</li>
                      </ul>
-                     <h4 class="font-semibold text-gray-700 mt-4 mb-2">Regressão Linear</h4>
-                     <p class="text-sm text-gray-600 mb-2">Técnica estatística que ajusta uma linha reta aos dados para identificar tendência. A equação da reta é:</p>
-                     <p class="text-sm bg-gray-100 p-2 rounded font-mono">y = ${stats.trend.slope.toFixed(4)}x + ${stats.trend.intercept.toFixed(2)}</p>
-                     <p class="text-sm text-gray-600 mt-2">Onde x é o número do semestre e y é o preço projetado.</p>
                      <h4 class="font-semibold text-gray-700 mt-4 mb-2">Limitações</h4>
                      <p class="text-sm text-gray-600">Projeções são baseadas no passado e não preveem eventos inesperados (crises, mudanças de impostos, pandemia).</p>`
                 )}
@@ -1103,5 +1099,6 @@ function createBHMap(data, isPrice = false) {
         }).join('')}
     </svg>`;
 }
+
 
 
