@@ -84,5 +84,3 @@ export function calculateCorrelation(arr1, arr2) {
     const denominator = Math.sqrt(sum1 * sum2);
     return denominator === 0 ? 0 : numerator / denominator;
 }
-
-// A CHAVETA '}' EXTRA QUE ESTAVA AQUI FOI REMOVIDA
