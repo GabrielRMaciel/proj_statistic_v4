@@ -7,7 +7,6 @@ import { formatCurrency, calculateCorrelation } from './utils.js';
 export function renderChapterOverview(contentEl, dataToUse, getCachedStats) {
     const totalRecords = dataToUse.length;
     const uniqueStations = _.uniqBy(dataToUse, 'cnpjDaRevenda').length;
-    // MODIFICAÇÃO: fuelTypes agora só terá 'GASOLINA'
     const fuelTypes = _.uniq(dataToUse.map(d => d.produto));
     const regionals = _.uniq(dataToUse.map(d => d.regional)).filter(r => r !== 'Não Identificada');
     
@@ -61,8 +60,6 @@ export function renderChapterOverview(contentEl, dataToUse, getCachedStats) {
     const sortedSemesters = Object.keys(recordsBySemester).sort();
     const sortedSemesterValues = sortedSemesters.map(semester => recordsBySemester[semester]);
     createBarChart('dist-semester', sortedSemesters, sortedSemesterValues, { indexAxis: 'y' });
-    
-    // MODIFICAÇÃO: Chamada para createDoughnutChart removida
 
     const recordsByRegional = stats.recordsByRegional;
     const regionalKeys = Object.keys(recordsByRegional);
@@ -82,7 +79,6 @@ export function renderChapterDistribution(contentEl, filteredData, getCachedStat
     const prices = filteredData.map(d => d.valorDeVenda);
     const stats = getCachedStats('distribution', () => {
         
-        // MODIFICAÇÃO: Adicionada verificação para 'prices.length === 0'
         if (prices.length === 0) {
             return { mean: 0, median: 0, mode: 'N/A', std: 0, min: 0, max: 0, q1: 0, q3: 0, iqr: 0, outliers: [] };
         }
@@ -95,7 +91,6 @@ export function renderChapterDistribution(contentEl, filteredData, getCachedStat
         };
     });
     
-    // MODIFICAÇÃO: Adicionada verificação para evitar divisão por zero
     stats.cv = stats.mean ? (stats.std / stats.mean) * 100 : 0;
     stats.iqr = (typeof stats.q3 === 'number' && typeof stats.q1 === 'number') ? stats.q3 - stats.q1 : 0;
     stats.outliers = stats.iqr > 0 ? detectOutliers(prices, stats.q1, stats.q3, stats.iqr) : [];
@@ -163,7 +158,7 @@ export function renderChapterTemporal(contentEl, filteredData, getCachedStats) {
         const secondSemAvgs = [];
         semesters.forEach(sem => {
             const semData = groupedBySemester[sem];
-            if (semData && semData.length > 0) { // Evita erro de array vazio
+            if (semData && semData.length > 0) {
                 const avg = math.mean(semData.map(d => d.valorDeVenda));
                 if (sem.includes('S1')) {
                     firstSemAvgs.push(avg);
@@ -436,9 +431,9 @@ export function renderChapterRegional(contentEl, filteredData, getCachedStats) {
     createBoxPlot('regional-boxplot', stats, 'regional');
 }
 
-// ==========================================================
-// ============= INÍCIO DA SEÇÃO 'BANDEIRAS' ================
-// ==========================================================
+
+// --- INÍCIO DA SEÇÃO 'BANDEIRAS' ---
+
 
 export function renderChapterBandeiras(contentEl, filteredData, getCachedStats) {
     if (filteredData.length === 0) {
@@ -519,7 +514,6 @@ export function renderChapterBandeiras(contentEl, filteredData, getCachedStats) 
         </div>
     `;
 
-    // **** NOVO CARD ADICIONADO ****
     // Card para a Bandeira Mais Barata
     let cheapestBrandCardHtml = '';
     if (cheapestBrand) {
@@ -647,9 +641,9 @@ export function renderChapterBandeiras(contentEl, filteredData, getCachedStats) 
     }
 }
 
-// ==========================================================
-// ============= FIM DA SEÇÃO 'BANDEIRAS' ===================
-// ==========================================================
+
+// --- FIM DA SEÇÃO 'BANDEIRAS' ---
+
 
 
 export function renderChapterCorrelation(contentEl, filteredData, getCachedStats) {
@@ -875,7 +869,7 @@ export function renderChapterInsights(contentEl, allData, filteredData, getCache
 function generateInsights(allData, filteredData, detectOutliers) {
     const insights = [];
     const prices = allData.map(d => d.valorDeVenda);
-    if (prices.length === 0) return { insights: [], summary: {} }; // Sai se não houver dados
+    if (prices.length === 0) return { insights: [], summary: {} };
 
     const semesters = _.uniq(allData.map(d => d.semestre)).sort();
     if (semesters.length === 0) return { insights: [], summary: {} };
@@ -940,8 +934,6 @@ function generateInsights(allData, filteredData, detectOutliers) {
                   'O mercado é relativamente homogêneo, com pequena variação entre postos.'}</p>`,
         impact: null
     });
-
-    // Seção de paridade (Etanol) não será executada, pois filtramos os dados.
 
     const sortedPrices = [...prices].sort((a, b) => a - b);
     const q1 = math.quantileSeq(sortedPrices, 0.25, false);
@@ -1036,9 +1028,8 @@ export function renderFilters(allData) {
 }
 
 export function renderGlossary() {
-    // Esta função não está sendo chamada, mas a deixamos aqui.
     const glossaryEl = document.getElementById('glossary');
-    // ... (código do glossário omitido para brevidade)
+    
 }
 
 function createMetricCard(title, value, tooltipText, iconName) {
@@ -1096,7 +1087,7 @@ function createBHMap(data, isPrice = false) {
     const min = Math.min(...values);
     const max = Math.max(...values);
     const getColor = (value) => {
-        if (max === min || !value) return '#dbeafe'; // Cor base para valor único ou nulo
+        if (max === min || !value) return '#dbeafe';
         const ratio = (value - min) / (max - min);
         const r = Math.round(96 + ratio * (239 - 96));
         const g = Math.round(165 - ratio * (165 - 68));
@@ -1112,3 +1103,4 @@ function createBHMap(data, isPrice = false) {
         }).join('')}
     </svg>`;
 }
+
