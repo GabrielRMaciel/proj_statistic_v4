@@ -773,7 +773,7 @@ export function renderChapterInsights(contentEl, allData, filteredData, getCache
                     </div>
                     <p class="text-gray-700">
                         Esta seção sintetiza os insights mais importantes da análise completa dos dados
-                        de gasolina em Belo Horizonte entre 2022 e 2025.
+                        de gasolina em Belo Horizonte entre 2023 e 2025.
                     </p>
                 </div>
 
@@ -839,14 +839,6 @@ export function renderChapterInsights(contentEl, allData, filteredData, getCache
 
                      <h4 class="font-semibold text-gray-700 mb-2">Para Gestores Públicos</h4>
                      <p class="text-sm text-gray-600 mb-4">Identifique <strong>disparidades regionais</strong> que merecem atenção e monitore tendências para planejamento.</p>
-
-                     <h4 class="font-semibold text-gray-700 mb-2">Próximos Passos</h4>
-                     <ul class="list-disc list-inside text-sm text-gray-600 space-y-1">
-                        <li>Modelagem preditiva avançada</li>
-                        <li>Análise de clustering de postos</li>
-                        <li>Integração com dados socioeconômicos</li>
-                        <li>Estudos qualitativos complementares</li>
-                     </ul>`
                 )}
             </div>
         </div>`;
@@ -1056,5 +1048,6 @@ function createEmptyState() {
         <p class="mt-1 text-sm text-gray-500">Tente ajustar os filtros para visualizar os dados.</p>
     </div>`;
 }
+
 
 
