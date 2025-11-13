@@ -36,11 +36,6 @@ export function renderChapterOverview(contentEl, dataToUse, getCachedStats) {
                     ${createChartCard('dist-regional', 'Registros por Regional', 'Cobertura de dados em cada regional.')}
                     ${createChartCard('dist-brand', 'Top 10 Bandeiras', 'As 10 bandeiras com mais registros.')}
                 </div>
-                <div class="bg-white p-6 rounded-lg shadow">
-                    <h3 class="text-lg font-semibold mb-2">Cobertura Geográfica</h3>
-                    <p class="text-sm text-gray-600 mb-4">Mapa com a concentração de registros por regional.</p>
-                    ${createBHMap(stats.recordsByRegional)}
-                </div>
             </div>
             <div class="sidebar p-6 rounded-lg shadow-sm">
                 ${createSidebar(
@@ -1061,4 +1056,5 @@ function createEmptyState() {
         <p class="mt-1 text-sm text-gray-500">Tente ajustar os filtros para visualizar os dados.</p>
     </div>`;
 }
+
 
