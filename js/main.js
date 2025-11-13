@@ -4,7 +4,7 @@ import {
     renderNavigation, renderFilters,
     renderChapterOverview, renderChapterDistribution,
     renderChapterTemporal, renderChapterRegional,
-    renderChapterBandeiras, // <-- ADICIONADO
+    renderChapterBandeiras,
     renderChapterCorrelation, renderChapterInsights
 } from './ui.js';
 import { destroyAllCharts } from './charts.js';
@@ -21,7 +21,7 @@ const chapters = [
     { id: 'distribution', name: 'Distribuições', icon: 'bar-chart-3' },
     { id: 'temporal', name: 'Evolução Temporal', icon: 'trending-up' },
     { id: 'regional', name: 'Análise Regional', icon: 'map' },
-    { id: 'bandeiras', name: 'Análise por Bandeira', icon: 'tags' }, // <-- ADICIONADO
+    { id: 'bandeiras', name: 'Análise por Bandeira', icon: 'tags' },
     { id: 'correlation', name: 'Correlações', icon: 'git-merge' },
     { id: 'insights', name: 'Insights', icon: 'lightbulb' }
 ];
@@ -30,8 +30,6 @@ const chapters = [
 
 async function main() {
     try {
-        // O bloco 'Chart.register' FOI REMOVIDO DAQUI.
-        // O plugin carregado no index.html se registra sozinho.
         
         allData = await loadAllData();
         if (allData.length === 0) {
@@ -84,8 +82,7 @@ function applyFilters() {
 
 function setActiveChapter(chapterId) {
     activeChapter = chapterId;
-    
-    // MODIFICAÇÃO: Corrigido o erro de digitação de 'activeB_chapter' para 'activeChapter'
+
     renderNavigation(chapters, activeChapter); 
     
     lucide.createIcons();
@@ -116,7 +113,7 @@ function renderActiveChapter() {
         case 'regional': 
             renderChapterRegional(contentEl, filteredData, getCachedStats); 
             break;
-        case 'bandeiras': // <-- ADICIONADO
+        case 'bandeiras':
             renderChapterBandeiras(contentEl, filteredData, getCachedStats);
             break;
         case 'correlation':
@@ -131,3 +128,4 @@ function renderActiveChapter() {
 
 // --- Iniciar a aplicação ---
 document.addEventListener('DOMContentLoaded', main);
+
