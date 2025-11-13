@@ -816,19 +816,6 @@ export function renderChapterInsights(contentEl, allData, filteredData, getCache
                         ${createSummaryCard('Combustível', 'Gasolina')}
                     </div>
                 </div>
-
-                <div class="bg-yellow-50 border border-yellow-200 p-6 rounded-lg">
-                    <h4 class="font-semibold text-yellow-900 mb-3 flex items-center space-x-2">
-                        <i data-lucide="alert-circle" class="h-5 w-5"></i>
-                        <span>Limitações e Considerações</span>
-                    </h4>
-                    <ul class="text-sm text-yellow-800 space-y-2 list-disc list-inside">
-                        <li>Os dados representam uma <strong>amostra</strong>, não a população completa de postos de BH.</li>
-                        <li>Análises são <strong>descritivas e correlacionais</strong>, não estabelecem causalidade definitiva.</li>
-                        <li>Projeções futuras assumem continuidade de padrões históricos.</li>
-                        <li>Variáveis importantes como qualidade ou serviços adicionais não estão disponíveis.</li>
-                    </ul>
-                </div>
             </div>
 
            <div class="sidebar p-6 rounded-lg shadow-sm">
@@ -1048,6 +1035,7 @@ function createEmptyState() {
         <p class="mt-1 text-sm text-gray-500">Tente ajustar os filtros para visualizar os dados.</p>
     </div>`;
 }
+
 
 
 
