@@ -1066,39 +1066,3 @@ function createEmptyState() {
         <p class="mt-1 text-sm text-gray-500">Tente ajustar os filtros para visualizar os dados.</p>
     </div>`;
 }
-
-function createBHMap(data, isPrice = false) {
-    const regionals = [
-        { id: 'Barreiro', d: 'M153 303 L134 321 L126 314 L117 320 L108 310 L108 290 L125 282 L140 285 Z' },
-        { id: 'Centro-Sul', d: 'M188 234 L175 248 L170 270 L178 285 L192 280 L205 260 Z' },
-        { id: 'Leste', d: 'M205 260 L192 280 L210 295 L225 280 L228 255 Z' },
-        { id: 'Nordeste', d: 'M228 255 L225 280 L245 270 L250 240 Z' },
-        { id: 'Noroeste', d: 'M188 234 L160 210 L148 220 L155 245 L175 248 Z' },
-        { id: 'Norte', d: 'M250 240 L245 270 L270 260 L280 220 L260 210 Z' },
-        { id: 'Oeste', d: 'M155 245 L148 220 L120 235 L125 282 L140 285 L178 285 L170 270 L175 248 Z' },
-        { id: 'Pampulha', d: 'M160 210 L188 234 L250 240 L260 210 L230 180 L180 190 Z' },
-        { id: 'Venda Nova', d: 'M280 220 L270 260 L300 250 L310 200 L290 190 Z' }
-    ];
-    let values = Object.values(data).filter(v => typeof v === 'number');
-    const min = Math.min(...values);
-    const max = Math.max(...values);
-    const getColor = (value) => {
-        if (max === min || !value) return '#dbeafe';
-        const ratio = (value - min) / (max - min);
-        const r = Math.round(96 + ratio * (239 - 96));
-        const g = Math.round(165 - ratio * (165 - 68));
-        const b = Math.round(250 - ratio * (250 - 68));
-        return `rgb(${r}, ${g}, ${b})`;
-    };
-    return `<svg viewBox="100 180 220 150" class="w-full h-auto">
-        ${regionals.map(r => {
-            const value = data[r.id] || 0;
-            const color = isPrice ? getColor(value) : '#cae2fc';
-            const tooltipText = `${r.id}: ${isPrice ? formatCurrency(value) : value.toLocaleString('pt-BR') + ' registros'}`;
-            return `<path d="${r.d}" fill="${color}" stroke="#fff" stroke-width="1" class="map-regional has-tooltip"><title>${tooltipText}</title></path>`;
-        }).join('')}
-    </svg>`;
-}
-
-
-
