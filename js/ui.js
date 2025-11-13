@@ -834,11 +834,11 @@ export function renderChapterInsights(contentEl, allData, filteredData, getCache
             <div class="sidebar p-6 rounded-lg shadow-sm">
                 ${createSidebar(
                     'De Dados a Decisões',
-                    <h4 class="font-semibold text-gray-700 mb-2">Para Consumidores</h4>
+                    `<h4 class="font-semibold text-gray-700 mb-2">Para Consumidores</h4>
                     <p class="text-sm text-gray-600 mb-4">Use os insights para escolher <strong>onde e quando abastecer</strong>, considerando regionais com preços mais baixos.</p>
 
                      <h4 class="font-semibold text-gray-700 mb-2">Para Gestores Públicos</h4>
-                     <p class="text-sm text-gray-600 mb-4">Identifique <strong>disparidades regionais</strong> que merecem atenção e monitore tendências para planejamento.</p>
+                     <p class="text-sm text-gray-600 mb-4">Identifique <strong>disparidades regionais</strong> que merecem atenção e monitore tendências para planejamento.</p>`
                 }}
             </div>
         </div>`;
@@ -1048,6 +1048,7 @@ function createEmptyState() {
         <p class="mt-1 text-sm text-gray-500">Tente ajustar os filtros para visualizar os dados.</p>
     </div>`;
 }
+
 
 
 
