@@ -37,19 +37,6 @@ export function createBarChart(canvasId, labels, data, options = {}) {
     });
 }
 
-export function createDoughnutChart(canvasId, labels, data) {
-    const ctx = document.getElementById(canvasId)?.getContext('2d');
-    if (!ctx) return;
-    charts[canvasId] = new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-            labels,
-            datasets: [{ data, backgroundColor: labels.map(l => FUEL_COLORS[l] || FUEL_COLORS.default) }]
-        },
-        options: { responsive: true, maintainAspectRatio: false }
-    });
-}
-
 export function createLineChart(canvasId, labels, dataSets) {
     const ctx = document.getElementById(canvasId)?.getContext('2d');
     if (!ctx) return;
@@ -118,3 +105,4 @@ export function createBoxPlot(canvasId, data, label) {
     });
 
 }
+
