@@ -1,9 +1,6 @@
 // js/charts.js
 import { FUEL_COLORS, formatCurrency } from './utils.js';
 
-// MODIFICAÇÃO: O 'if (window.ChartBoxPlot)' FOI REMOVIDO DESTE ARQUIVO
-// O plugin no index.html cuida disso.
-
 export const charts = {};
 
 export function destroyAllCharts() {
@@ -119,4 +116,5 @@ export function createBoxPlot(canvasId, data, label) {
         data: { labels, datasets },
         options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
     });
+
 }
